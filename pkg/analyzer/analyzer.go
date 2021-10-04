@@ -1,7 +1,6 @@
 package analyzer
 
 import (
-	"fmt"
 	"go/ast"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -17,36 +16,49 @@ var Analyzer = &analysis.Analyzer{
 }
 
 type visitor struct {
+	importSpec map[string]*ast.Node
+	assignStmt map[string]*ast.Ident
+}
+
+func (v *visitor) walk(n ast.Node) {
+	if n != nil {
+		ast.Walk(v, n)
+	}
 }
 
 func (v *visitor) Visit(node ast.Node) ast.Visitor {
 	switch stmt := node.(type) {
 	case *ast.ImportSpec:
-		fmt.Println(strings.Trim(stmt.Path.Value, "\""))
+		if stmt.Name != nil {
+			v.importSpec[stmt.Name.Name] = &node
+		} else {
+			imp := strings.Split(strings.Trim(stmt.Path.Value, "\""), "/")
+			v.importSpec[imp[len(imp)-1]] = &node
+		}
 	case *ast.AssignStmt:
-		fmt.Println(stmt.Lhs[0])
+		switch va := stmt.Lhs[0].(type) {
+		case *ast.SelectorExpr:
+			//TODO?
+		case *ast.Ident:
+			v.assignStmt[va.Name] = va
+		}
 	}
 	return v
 }
 
 func runAnalyzer(pass *analysis.Pass) (interface{}, error) {
-	/*ins := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
-	nodeFilter := []ast.Node{ // filter needed nodes: visit only them
-		(*ast.ImportSpec)(nil),
-		(*ast.AssignStmt)(nil),
-	}
-	ins.Preorder(nodeFilter, func(node ast.Node) {
-		switch n := node.(type) {
-		case *ast.ImportSpec:
-			fmt.Println(n.Path)
-		case *ast.AssignStmt:
-			fmt.Println(n.Lhs[0])
-		}
-	})*/
-	v := &visitor{}
 	for _, f := range pass.Files {
-		fmt.Println(f.Name)
-		ast.Walk(v, f)
+		v := &visitor{
+			importSpec: make(map[string]*ast.Node),
+			assignStmt: make(map[string]*ast.Ident),
+		}
+		v.walk(f)
+
+		for k, e := range v.assignStmt {
+			if v.importSpec[k] != nil {
+				pass.Reportf(e.Pos(), "Variable '%s' collides with imported package name", k)
+			}
+		}
 	}
 	return nil, nil
 }
