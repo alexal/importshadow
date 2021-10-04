@@ -37,8 +37,7 @@ func (v *visitor) Visit(node ast.Node) ast.Visitor {
 		}
 	case *ast.AssignStmt:
 		switch va := stmt.Lhs[0].(type) {
-		case *ast.SelectorExpr:
-			//TODO?
+		//case *ast.SelectorExpr:
 		case *ast.Ident:
 			v.assignStmt[va.Name] = va
 		}
