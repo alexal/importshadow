@@ -1,4 +1,4 @@
-module github.com/alexal/govarpkg
+module github.com/alexal/importshadow
 
 go 1.24
 

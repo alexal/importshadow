@@ -1,5 +1,5 @@
 binary:
-	go build -o govarpkg ./cmd/govarpkg
+	go build -o importshadow ./cmd/importshadow
 .PHONY: binary
 
 lint:

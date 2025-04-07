@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/alexal/govarpkg/pkg/analyzer"
+	"github.com/alexal/importshadow/pkg/analyzer"
 	"golang.org/x/tools/go/analysis/singlechecker"
 )
 
