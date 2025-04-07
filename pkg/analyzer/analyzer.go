@@ -7,25 +7,22 @@ import (
 	"strings"
 )
 
+// Analyzer defines the import shadow analyzer.
 var Analyzer = &analysis.Analyzer{
-	Name:             "govarpkg",
-	Doc:              "govarpkg",
+	Name:             "importshadow",
+	Doc:              "Detects variable declarations that shadow imported package names.",
 	Run:              runAnalyzer,
 	Requires:         []*analysis.Analyzer{inspect.Analyzer},
 	RunDespiteErrors: true,
 }
 
+// visitor holds the import specifications and assignment statements.
 type visitor struct {
 	importSpec map[string]*ast.Node
 	assignStmt map[string]*ast.Ident
 }
 
-func (v *visitor) walk(n ast.Node) {
-	if n != nil {
-		ast.Walk(v, n)
-	}
-}
-
+// Visit implements the ast.Visitor interface.
 func (v *visitor) Visit(node ast.Node) ast.Visitor {
 	switch stmt := node.(type) {
 	case *ast.ImportSpec:
@@ -36,26 +33,27 @@ func (v *visitor) Visit(node ast.Node) ast.Visitor {
 			v.importSpec[imp[len(imp)-1]] = &node
 		}
 	case *ast.AssignStmt:
-		switch va := stmt.Lhs[0].(type) {
-		//case *ast.SelectorExpr:
-		case *ast.Ident:
-			v.assignStmt[va.Name] = va
+		for _, lhs := range stmt.Lhs {
+			if ident, ok := lhs.(*ast.Ident); ok {
+				v.assignStmt[ident.Name] = ident
+			}
 		}
 	}
 	return v
 }
 
+// runAnalyzer runs the import shadow analyzer.
 func runAnalyzer(pass *analysis.Pass) (interface{}, error) {
 	for _, f := range pass.Files {
 		v := &visitor{
 			importSpec: make(map[string]*ast.Node),
 			assignStmt: make(map[string]*ast.Ident),
 		}
-		v.walk(f)
+		ast.Walk(v, f)
 
-		for k, e := range v.assignStmt {
-			if v.importSpec[k] != nil {
-				pass.Reportf(e.Pos(), "Variable '%s' collides with imported package name", k)
+		for name, ident := range v.assignStmt {
+			if v.importSpec[name] != nil {
+				pass.Reportf(ident.Pos(), "Variable '%s' collides with imported package name", name)
 			}
 		}
 	}

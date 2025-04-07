@@ -7,10 +7,10 @@ import (
 	"testing"
 )
 
-func TestAll(t *testing.T) {
+func TestImportShadowAnalyzer(t *testing.T) {
 	wd, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("Failed to get wd: %s", err)
+		t.Fatalf("Failed to get working directory: %s", err)
 	}
 
 	testdata := filepath.Join(filepath.Dir(filepath.Dir(wd)), "testdata")
