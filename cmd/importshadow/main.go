@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// Pass the config to the analyzer
-	analyzer.SetConfig(config)
+	importShadowAnalyzer := analyzer.NewAnalyzer(config)
 
-	singlechecker.Main(analyzer.Analyzer)
+	singlechecker.Main(importShadowAnalyzer)
 }

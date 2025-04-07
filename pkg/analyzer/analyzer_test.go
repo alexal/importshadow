@@ -14,5 +14,9 @@ func TestImportShadowAnalyzer(t *testing.T) {
 	}
 
 	testdata := filepath.Join(filepath.Dir(filepath.Dir(wd)), "testdata")
-	analysistest.Run(t, testdata, Analyzer, "p")
+
+	analyser := NewAnalyzer(&Config{
+		IgnoreDirs: []string{"mocks"},
+	})
+	analysistest.Run(t, testdata, analyser, "p")
 }

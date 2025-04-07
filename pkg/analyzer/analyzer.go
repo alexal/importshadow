@@ -31,6 +31,11 @@ var Analyzer = &analysis.Analyzer{
 	RunDespiteErrors: true,
 }
 
+func NewAnalyzer(config *Config) *analysis.Analyzer {
+	SetConfig(config)
+	return Analyzer
+}
+
 // visitor holds the import specifications and assignment statements.
 type visitor struct {
 	importSpec map[string]*ast.Node
