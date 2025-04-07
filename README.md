@@ -1,2 +1,2 @@
-# govarpkg
-Linter for Go, which finds variables that collide with imported package names.
+# importshadow
+A golangci-lint analyzer that detects variable declarations that shadow imported package names.
