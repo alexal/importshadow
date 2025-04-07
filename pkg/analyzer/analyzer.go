@@ -1,11 +1,26 @@
 package analyzer
 
 import (
+	"fmt"
 	"go/ast"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
+	"path/filepath"
 	"strings"
 )
+
+// Config holds the configuration for the analyzer.
+type Config struct {
+	IgnoreDirs []string
+}
+
+// Global variable to hold the configuration
+var config *Config
+
+// SetConfig sets the configuration for the analyzer.
+func SetConfig(cfg *Config) {
+	config = cfg
+}
 
 // Analyzer defines the import shadow analyzer.
 var Analyzer = &analysis.Analyzer{
@@ -45,6 +60,11 @@ func (v *visitor) Visit(node ast.Node) ast.Visitor {
 // runAnalyzer runs the import shadow analyzer.
 func runAnalyzer(pass *analysis.Pass) (interface{}, error) {
 	for _, f := range pass.Files {
+		// Skip files in ignored directories
+		if shouldIgnoreFile(pass.Fset.File(f.Pos()).Name(), config.IgnoreDirs) {
+			continue
+		}
+
 		v := &visitor{
 			importSpec: make(map[string]*ast.Node),
 			assignStmt: make(map[string]*ast.Ident),
@@ -58,4 +78,14 @@ func runAnalyzer(pass *analysis.Pass) (interface{}, error) {
 		}
 	}
 	return nil, nil
+}
+
+// shouldIgnoreFile checks if a file should be ignored based on the directory.
+func shouldIgnoreFile(filePath string, ignoreDirs []string) bool {
+	for _, dir := range ignoreDirs {
+		if strings.Contains(filepath.ToSlash(filePath), fmt.Sprintf("/%s/", dir)) {
+			return true
+		}
+	}
+	return false
 }
